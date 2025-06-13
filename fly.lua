@@ -1,3 +1,10 @@
+-- Prevent multiple executions
+if _G.FlyScriptLoaded then
+    print("already loaded!")
+    return
+end
+_G.FlyScriptLoaded = true
+
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local IYMouse
