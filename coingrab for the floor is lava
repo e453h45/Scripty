@@ -1,0 +1,124 @@
+-- Prevent loading twice globally
+if getgenv and getgenv()._coingrab_loaded then
+    warn("CoinGrab script already loaded.")
+    return
+end
+if getgenv then
+    getgenv()._coingrab_loaded = true
+end
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+-- Flag to avoid duplicate grab calls
+local coingrabRunning = false
+
+-- GUI message function
+local function showLoadedMessage()
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "CoinGrabMsg"
+    screenGui.ResetOnSpawn = false
+    screenGui.IgnoreGuiInset = true
+    screenGui.Parent = player:WaitForChild("PlayerGui")
+
+    local frame = Instance.new("Frame")
+    frame.AnchorPoint = Vector2.new(0.5, 0) -- center horizontally, top vertically
+    frame.Position = UDim2.new(0.5, 0, 0, 10) -- top center with 10 pixels down
+    frame.Size = UDim2.new(0, 400, 0, 40)
+    frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    frame.BackgroundTransparency = 0.2
+    frame.BorderSizePixel = 0
+    frame.AnchorPoint = Vector2.new(0, 0)
+    frame.Parent = screenGui
+
+    local uicorner = Instance.new("UICorner", frame)
+    uicorner.CornerRadius = UDim.new(0, 8)
+
+    local uiStroke = Instance.new("UIStroke", frame)
+    uiStroke.Color = Color3.fromRGB(255, 255, 255)
+    uiStroke.Thickness = 1.2
+    uiStroke.Transparency = 0.3
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, 0, 1, 0)
+    label.BackgroundTransparency = 1
+    label.Text = "coingrab loaded, its purpose is only for the floor is lava but idc real"
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.TextSize = 16
+    label.Font = Enum.Font.Gotham
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.TextWrapped = true
+    label.ClipsDescendants = true
+    label.Parent = frame
+
+    task.delay(5, function()
+        screenGui:Destroy()
+    end)
+end
+
+-- Grabber function
+local function grabCoinsAndTokens()
+    if coingrabRunning then
+        warn("Already loaded")
+        return
+    end
+    coingrabRunning = true
+    showLoadedMessage()
+
+    local character = player.Character or player.CharacterAdded:Wait()
+    local torso = character:FindFirstChild("Torso") or character:FindFirstChild("UpperTorso")
+    if not torso then
+        warn("No torso or upper torso found!")
+        return
+    end
+
+    local function isCoinOrToken(name)
+        name = name:lower()
+        return name:match("^coin%d*$") or name == "coin" or name == "coins" or name:match("token")
+    end
+
+    while coingrabRunning do
+        task.wait(0.1)
+        for _, obj in ipairs(workspace:GetDescendants()) do
+            if obj:IsA("BasePart") and isCoinOrToken(obj.Name) then
+                obj.Anchored = true
+                obj.CFrame = torso.CFrame
+            end
+        end
+    end
+end
+
+-- Command system
+local cmdlist = {}
+
+local function registerCommand(cmd, func, aliases)
+    cmdlist[cmd:lower()] = func
+    for _, alias in ipairs(aliases) do
+        cmdlist[alias:lower()] = func
+    end
+end
+
+-- Register ;coingrab command
+registerCommand("coingrab", function(args, plr)
+    grabCoinsAndTokens()
+end, {"COINGRAB", "CoinGrab", "CoINgrAB"})
+
+-- Chat listener
+Players.LocalPlayer.Chatted:Connect(function(msg)
+    if msg:sub(1,1) == ";" then
+        local args = {}
+        for word in msg:sub(2):gmatch("%S+") do
+            table.insert(args, word)
+        end
+        local command = args[1] and args[1]:lower() or ""
+        table.remove(args, 1)
+        if cmdlist[command] then
+            cmdlist[command](args, player)
+        end
+    end
+end)
+
+-- Load noclip script immediately on script run
+pcall(function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/e453h45/Scripty/refs/heads/main/noclip.lua"))()
+end)
