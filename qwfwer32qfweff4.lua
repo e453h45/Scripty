@@ -386,6 +386,7 @@ end)
 -- Extensión: menú extra con botón Anti Bus (con mensajes solo en eventos)
 local function createExtraPackGUI()
     local UserInputService = game:GetService("UserInputService")
+    local Workspace = game:GetService("Workspace")
 
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = "ExtraPackGUI"
@@ -425,6 +426,66 @@ local function createExtraPackGUI()
 
     closeButton.MouseButton1Click:Connect(function()
         mainFrame.Visible = false
+    end)
+
+    -- Botón Anti Bus
+    local antiBusEnabled = false
+    local antiBusButton = Instance.new("TextButton", mainFrame)
+    antiBusButton.Size = UDim2.new(0.9, 0, 0, 40)
+    antiBusButton.Position = UDim2.new(0.05, 0, 0, 35)
+    antiBusButton.Text = "Anti Bus: OFF"
+    antiBusButton.BackgroundColor3 = Color3.fromRGB(180, 0, 0) -- rojo
+    antiBusButton.TextColor3 = Color3.new(1,1,1)
+    antiBusButton.TextScaled = true
+    antiBusButton.Font = Enum.Font.SourceSansBold
+
+    -- Label para mensajes de estado
+    local statusLabel = Instance.new("TextLabel", mainFrame)
+    statusLabel.Size = UDim2.new(0.9, 0, 0, 20)
+    statusLabel.Position = UDim2.new(0.05, 0, 0, 85)
+    statusLabel.BackgroundTransparency = 1
+    statusLabel.TextColor3 = Color3.new(1,1,1)
+    statusLabel.TextScaled = true
+    statusLabel.Font = Enum.Font.SourceSans
+
+    antiBusButton.MouseButton1Click:Connect(function()
+        antiBusEnabled = not antiBusEnabled
+        if antiBusEnabled then
+            antiBusButton.Text = "Anti Bus: ON"
+            antiBusButton.BackgroundColor3 = Color3.fromRGB(0, 180, 0) -- verde
+            statusLabel.Text = "[DEBUG] Anti Bus Activated"
+        else
+            antiBusButton.Text = "Anti Bus: OFF"
+            antiBusButton.BackgroundColor3 = Color3.fromRGB(180, 0, 0) -- rojo
+            statusLabel.Text = "[DEBUG] Anti Bus Deactivated"
+        end
+    end)
+
+    -- Loop para checar BusModel cuando está activado (solo mensajes en eventos)
+    spawn(function()
+        local lastBusExisted = false
+        while true do
+            if antiBusEnabled then
+                local bus = Workspace:FindFirstChild("BusModel")
+                if bus then
+                    if not lastBusExisted then
+                        -- Acaba de aparecer bus, eliminarlo
+                        bus:Destroy()
+                        statusLabel.Text = "[DEBUG] BusModel eliminado (Anti Bus)"
+                        lastBusExisted = false -- porque ya no existe tras destruirlo
+                    end
+                else
+                    if lastBusExisted then
+                        -- Bus desapareció
+                        statusLabel.Text = "[DEBUG] BusModel desapareció"
+                    end
+                    lastBusExisted = false
+                end
+            else
+                lastBusExisted = false
+            end
+            task.wait(0.1)
+        end
     end)
 
     -- Funcionalidad para arrastrar en PC y móvil
@@ -471,104 +532,11 @@ local function createExtraPackGUI()
 
     return screenGui, mainFrame
 end
-    -- Botón Anti Bus
-    local antiBusEnabled = false
-    local antiBusButton = Instance.new("TextButton", mainFrame)
-    antiBusButton.Size = UDim2.new(0.9, 0, 0, 40)
-    antiBusButton.Position = UDim2.new(0.05, 0, 0, 35)
-    antiBusButton.Text = "Anti Bus: OFF"
-    antiBusButton.BackgroundColor3 = Color3.fromRGB(180, 0, 0) -- rojo
-    antiBusButton.TextColor3 = Color3.new(1,1,1)
-    antiBusButton.TextScaled = true
-    antiBusButton.Font = Enum.Font.SourceSansBold
-
-    antiBusButton.MouseButton1Click:Connect(function()
-        antiBusEnabled = not antiBusEnabled
-        if antiBusEnabled then
-            antiBusButton.Text = "Anti Bus: ON"
-            antiBusButton.BackgroundColor3 = Color3.fromRGB(0, 180, 0) -- verde
-            statusLabel.Text = "[DEBUG] Anti Bus Activated"
-        else
-            antiBusButton.Text = "Anti Bus: OFF"
-            antiBusButton.BackgroundColor3 = Color3.fromRGB(180, 0, 0) -- rojo
-            statusLabel.Text = "[DEBUG] Anti Bus Deactivated"
-        end
-    end)
-
-    -- Loop para checar BusModel cuando está activado (solo mensajes en eventos)
-    spawn(function()
-        local lastBusExisted = false
-        while true do
-            if antiBusEnabled then
-                local bus = Workspace:FindFirstChild("BusModel")
-                if bus then
-                    if not lastBusExisted then
-                        -- Acaba de aparecer bus, eliminarlo
-                        bus:Destroy()
-                        statusLabel.Text = "[DEBUG] BusModel eliminado (Anti Bus)"
-                        lastBusExisted = false -- porque ya no existe tras destruirlo
-                    end
-                else
-                    if lastBusExisted then
-                        -- Bus desapareció
-                        statusLabel.Text = "[DEBUG] BusModel desapareció"
-                    end
-                    lastBusExisted = false
-                end
-            else
-                lastBusExisted = false
-            end
-            task.wait(0.1)
-        end
-    end)
-
-    -- Función para hacer draggable el frame
-    local function makeDraggable(frame)
-        local dragging
-        local dragInput
-        local dragStart
-        local startPos
-
-        frame.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                dragging = true
-                dragStart = input.Position
-                startPos = frame.Position
-
-                input.Changed:Connect(function()
-                    if input.UserInputState == Enum.UserInputState.End then
-                        dragging = false
-                    end
-                end)
-            end
-        end)
-
-        frame.InputChanged:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseMovement then
-                dragInput = input
-            end
-        end)
-
-        game:GetService("UserInputService").InputChanged:Connect(function(input)
-            if dragging and input == dragInput then
-                local delta = input.Position - dragStart
-                frame.Position = UDim2.new(
-                    startPos.X.Scale,
-                    startPos.X.Offset + delta.X,
-                    startPos.Y.Scale,
-                    startPos.Y.Offset + delta.Y
-                )
-            end
-        end)
-    end
-
-    makeDraggable(mainFrame)
-
-    return screenGui, mainFrame
-end
 
 local extraPackGUI, extraPackFrame = createExtraPackGUI()
 
+-- Para mostrar el GUI por defecto (opcional)
+extraPackFrame.Visible = true
 -- Botón para abrir/ocultar el Extra Pack en el GUI principal
 local openPackButton = Instance.new("TextButton", gui)
 openPackButton.Size = UDim2.new(0, 150, 0, 40)
