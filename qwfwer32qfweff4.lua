@@ -392,7 +392,7 @@ local function createExtraPackGUI()
 
     local mainFrame = Instance.new("Frame", screenGui)
     mainFrame.Size = UDim2.new(0, 250, 0, 120)
-    mainFrame.Position = UDim2.new(0.5, -125, 0.5, -60)
+    mainFrame.Position = UDim2.new(1, -260, 0, 10)
     mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
     mainFrame.BorderSizePixel = 0
     mainFrame.Visible = false
@@ -922,71 +922,3 @@ do
         end
     end)
 end
--- EXTENSIÓN FINAL
-task.delay(0.2, function()
-    -- Ajusta el GUI para ser más pequeño y posicionarlo en la esquina superior derecha
-    local gui = game:GetService("CoreGui"):FindFirstChild("ExtraPackGUI")
-    if not gui then return end
-
-    local frame = gui:FindFirstChild("MainFrame")
-    if not frame then return end
-
-    -- Compactar GUI
-    frame.Size = UDim2.new(0, 180, 0, 150)
-    frame.Position = UDim2.new(1, -190, 0, 10)
-
-    -- Ajustar botones internamente
-    for _, child in ipairs(frame:GetChildren()) do
-        if child:IsA("TextButton") and child.Name ~= "X" then
-            child.Size = UDim2.new(0.9, 0, 0, 30)
-        end
-    end
-end)
-
--- Hacer Draggable para móviles
-local function makeMobileDraggable(frame)
-    local dragging = false
-    local dragStart, startPos
-
-    frame.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            dragStart = input.Position
-            startPos = frame.Position
-        end
-    end)
-
-    frame.InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.Touch then
-            local delta = input.Position - dragStart
-            frame.Position = UDim2.new(
-                startPos.X.Scale,
-                startPos.X.Offset + delta.X,
-                startPos.Y.Scale,
-                startPos.Y.Offset + delta.Y
-            )
-        end
-    end)
-
-    frame.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.Touch then
-            dragging = false
-        end
-    end)
-end
-
--- Detectar plataforma y aplicar draggable correspondiente
-task.delay(0.5, function()
-    local deviceType = game:GetService("UserInputService").TouchEnabled and "Mobile" or "PC"
-    local gui = game:GetService("CoreGui"):FindFirstChild("ExtraPackGUI")
-    if gui then
-        local frame = gui:FindFirstChild("MainFrame")
-        if frame then
-            if deviceType == "Mobile" then
-                makeMobileDraggable(frame)
-            else
-                -- Ya está configurado para PC
-            end
-        end
-    end
-end)
