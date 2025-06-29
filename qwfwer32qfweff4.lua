@@ -476,123 +476,52 @@ local function createExtraPackGUI()
         end
     end)
 
--- GUI adaptable a PC y móvil/tablet
-local UserInputService = game:GetService("UserInputService")
-local isMobile = UserInputService.TouchEnabled
-local CoreGui = game:GetService("CoreGui")
+    -- Función para hacer draggable el frame
+    local function makeDraggable(frame)
+        local dragging
+        local dragInput
+        local dragStart
+        local startPos
 
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "ExtraPackGUI"
-screenGui.Parent = CoreGui
-screenGui.ResetOnSpawn = false
+        frame.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                dragging = true
+                dragStart = input.Position
+                startPos = frame.Position
 
-local mainFrame = Instance.new("Frame", screenGui)
-mainFrame.Name = "MainFrame"
-mainFrame.Size = isMobile and UDim2.new(0, 200, 0, 250) or UDim2.new(0, 250, 0, 120)
-mainFrame.Position = isMobile and UDim2.new(0, 10, 0, 100) or UDim2.new(0.5, -125, 0.5, -60)
-mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-mainFrame.BorderSizePixel = 0
-mainFrame.Visible = false
+                input.Changed:Connect(function()
+                    if input.UserInputState == Enum.UserInputState.End then
+                        dragging = false
+                    end
+                end)
+            end
+        end)
 
--- Barra superior (draggable)
-local topBar = Instance.new("Frame", mainFrame)
-topBar.Size = UDim2.new(1, 0, 0, 25)
-topBar.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        frame.InputChanged:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseMovement then
+                dragInput = input
+            end
+        end)
 
-local titleLabel = Instance.new("TextLabel", topBar)
-titleLabel.Size = UDim2.new(1, -30, 1, 0)
-titleLabel.Position = UDim2.new(0, 5, 0, 0)
-titleLabel.BackgroundTransparency = 1
-titleLabel.Text = "Extra Pack"
-titleLabel.TextColor3 = Color3.new(1, 1, 1)
-titleLabel.TextScaled = true
-titleLabel.Font = Enum.Font.SourceSansBold
-titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-
-local closeButton = Instance.new("TextButton", topBar)
-closeButton.Size = UDim2.new(0, 25, 1, 0)
-closeButton.Position = UDim2.new(1, -25, 0, 0)
-closeButton.Text = "X"
-closeButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-closeButton.TextColor3 = Color3.new(1,1,1)
-closeButton.TextScaled = true
-closeButton.Font = Enum.Font.SourceSansBold
-closeButton.MouseButton1Click:Connect(function()
-    mainFrame.Visible = false
-end)
-
--- Draggable (mouse + touch)
-local function makeDraggable(frame)
-    local dragging, dragInput, dragStart, startPos = false
-
-    local function update(input)
-        local delta = input.Position - dragStart
-        frame.Position = UDim2.new(
-            startPos.X.Scale,
-            startPos.X.Offset + delta.X,
-            startPos.Y.Scale,
-            startPos.Y.Offset + delta.Y
-        )
+        game:GetService("UserInputService").InputChanged:Connect(function(input)
+            if dragging and input == dragInput then
+                local delta = input.Position - dragStart
+                frame.Position = UDim2.new(
+                    startPos.X.Scale,
+                    startPos.X.Offset + delta.X,
+                    startPos.Y.Scale,
+                    startPos.Y.Offset + delta.Y
+                )
+            end
+        end)
     end
 
-    frame.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            dragStart = input.Position
-            startPos = frame.Position
-            dragInput = input
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
-            end)
-        end
-    end)
+    makeDraggable(mainFrame)
 
-    UserInputService.InputChanged:Connect(function(input)
-        if dragging and input == dragInput then
-            update(input)
-        end
-    end)
+    return screenGui, mainFrame
 end
 
-makeDraggable(mainFrame)
-
--- ✅ BOTÓN DE EJEMPLO dentro del Extra Pack
-local exampleButton = Instance.new("TextButton", mainFrame)
-exampleButton.Size = UDim2.new(0.9, 0, 0, 40)
-exampleButton.Position = UDim2.new(0.05, 0, 0, 35)
-exampleButton.Text = "Botón de Ejemplo"
-exampleButton.BackgroundColor3 = Color3.fromRGB(0, 120, 200)
-exampleButton.TextColor3 = Color3.new(1, 1, 1)
-exampleButton.TextScaled = true
-exampleButton.Font = Enum.Font.SourceSansBold
-
-exampleButton.MouseButton1Click:Connect(function()
-    print("[EXTRA PACK] Botón presionado")
-end)
-
--- 🔘 BOTÓN ABRIDOR (parte inferior izquierda de pantalla)
-local openButton = Instance.new("TextButton", screenGui)
-openButton.Size = UDim2.new(0, 150, 0, 40)
-openButton.Position = UDim2.new(0, 10, 1, -50)
-openButton.AnchorPoint = Vector2.new(0, 1)
-openButton.Text = "Abrir Extra Pack"
-openButton.BackgroundColor3 = Color3.fromRGB(0, 100, 180)
-openButton.TextColor3 = Color3.new(1,1,1)
-openButton.TextScaled = true
-openButton.Font = Enum.Font.SourceSansBold
-
-openButton.MouseButton1Click:Connect(function()
-    mainFrame.Visible = not mainFrame.Visible
-end)
-
--- 🔤 También puedes abrir con tecla B (solo en PC)
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if not gameProcessed and input.KeyCode == Enum.KeyCode.B then
-        mainFrame.Visible = not mainFrame.Visible
-    end
-end)
+local extraPackGUI, extraPackFrame = createExtraPackGUI()
 
 -- Botón para abrir/ocultar el Extra Pack en el GUI principal
 local openPackButton = Instance.new("TextButton", gui)
