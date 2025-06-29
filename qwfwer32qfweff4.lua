@@ -385,6 +385,8 @@ spawn(function()
 end)
 -- Extensión: menú extra con botón Anti Bus (con mensajes solo en eventos)
 local function createExtraPackGUI()
+    local UserInputService = game:GetService("UserInputService")
+
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = "ExtraPackGUI"
     screenGui.Parent = game:GetService("CoreGui")
@@ -392,7 +394,7 @@ local function createExtraPackGUI()
 
     local mainFrame = Instance.new("Frame", screenGui)
     mainFrame.Size = UDim2.new(0, 250, 0, 120)
-    mainFrame.Position = UDim2.new(1, -260, 0, 10)
+    mainFrame.Position = UDim2.new(1, -260, 0, 10) -- arriba derecha
     mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
     mainFrame.BorderSizePixel = 0
     mainFrame.Visible = false
@@ -425,6 +427,50 @@ local function createExtraPackGUI()
         mainFrame.Visible = false
     end)
 
+    -- Funcionalidad para arrastrar en PC y móvil
+    local dragging = false
+    local dragInput
+    local dragStart
+    local startPos
+
+    local function updatePosition(input)
+        local delta = input.Position - dragStart
+        mainFrame.Position = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
+    end
+
+    topBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = mainFrame.Position
+
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+
+    topBar.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            updatePosition(input)
+        end
+    end)
+
+    return screenGui, mainFrame
+end
     -- Botón Anti Bus
     local antiBusEnabled = false
     local antiBusButton = Instance.new("TextButton", mainFrame)
