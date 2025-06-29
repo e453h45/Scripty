@@ -514,8 +514,6 @@ end
 
 -- Uso: después de crear tu mainFrame:
 makeDraggable(mainFrame)
-
-
 -- Botón para abrir/ocultar el Extra Pack en el GUI principal
 local openPackButton = Instance.new("TextButton", gui)
 openPackButton.Size = UDim2.new(0, 150, 0, 40)
