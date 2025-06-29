@@ -993,3 +993,25 @@ do
         end
     end)
 end
+-- EXTENSIÓN: Compactar GUI y botones, mover arriba a la derecha
+local function compactExtraPack()
+    local gui = game:GetService("CoreGui"):FindFirstChild("ExtraPackGUI")
+    if not gui then return end
+
+    local frame = gui:FindFirstChild("MainFrame")
+    if not frame then return end
+
+    -- Redimensionar y reubicar el frame
+    frame.Size = UDim2.new(0, 180, 0, 150)
+    frame.Position = UDim2.new(1, -190, 0, 10)
+
+    -- Redimensionar botones internos (menos la barra de título)
+    for _, child in pairs(frame:GetChildren()) do
+        if child:IsA("TextButton") and child ~= frame:FindFirstChild("X") then
+            child.Size = UDim2.new(0.9, 0, 0, 30)
+        end
+    end
+end
+
+-- Activa la extensión si quieres:
+compactExtraPack()
