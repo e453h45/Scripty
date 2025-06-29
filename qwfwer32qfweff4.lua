@@ -476,18 +476,118 @@ local function createExtraPackGUI()
         end
     end)
 
-    -- Función para hacer draggable el frame
+local function createExtraPackGUI()
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "ExtraPackGUI"
+    screenGui.Parent = game:GetService("CoreGui")
+    screenGui.ResetOnSpawn = false
+
+    local mainFrame = Instance.new("Frame", screenGui)
+    mainFrame.Size = UDim2.new(0, 250, 0, 120)
+    mainFrame.Position = UDim2.new(0.5, -125, 0.5, -60)
+    mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    mainFrame.BorderSizePixel = 0
+    mainFrame.Visible = false
+
+    -- Barra superior (drag & close)
+    local topBar = Instance.new("Frame", mainFrame)
+    topBar.Size = UDim2.new(1, 0, 0, 25)
+    topBar.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+
+    local titleLabel = Instance.new("TextLabel", topBar)
+    titleLabel.Size = UDim2.new(1, -30, 1, 0)
+    titleLabel.Position = UDim2.new(0, 5, 0, 0)
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Text = "Extra Pack"
+    titleLabel.TextColor3 = Color3.new(1, 1, 1)
+    titleLabel.TextScaled = true
+    titleLabel.Font = Enum.Font.SourceSansBold
+    titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+    local closeButton = Instance.new("TextButton", topBar)
+    closeButton.Size = UDim2.new(0, 25, 1, 0)
+    closeButton.Position = UDim2.new(1, -25, 0, 0)
+    closeButton.Text = "X"
+    closeButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+    closeButton.TextColor3 = Color3.new(1,1,1)
+    closeButton.TextScaled = true
+    closeButton.Font = Enum.Font.SourceSansBold
+
+    closeButton.MouseButton1Click:Connect(function()
+        mainFrame.Visible = false
+    end)
+
+    -- Botón Anti Bus
+    local antiBusEnabled = false
+    local antiBusButton = Instance.new("TextButton", mainFrame)
+    antiBusButton.Size = UDim2.new(0.9, 0, 0, 40)
+    antiBusButton.Position = UDim2.new(0.05, 0, 0, 35)
+    antiBusButton.Text = "Anti Bus: OFF"
+    antiBusButton.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+    antiBusButton.TextColor3 = Color3.new(1,1,1)
+    antiBusButton.TextScaled = true
+    antiBusButton.Font = Enum.Font.SourceSansBold
+
+    antiBusButton.MouseButton1Click:Connect(function()
+        antiBusEnabled = not antiBusEnabled
+        if antiBusEnabled then
+            antiBusButton.Text = "Anti Bus: ON"
+            antiBusButton.BackgroundColor3 = Color3.fromRGB(0, 180, 0)
+            statusLabel.Text = "[DEBUG] Anti Bus Activated"
+        else
+            antiBusButton.Text = "Anti Bus: OFF"
+            antiBusButton.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+            statusLabel.Text = "[DEBUG] Anti Bus Deactivated"
+        end
+    end)
+
+    -- Loop para checar BusModel
+    spawn(function()
+        local lastBusExisted = false
+        while true do
+            if antiBusEnabled then
+                local bus = game:GetService("Workspace"):FindFirstChild("BusModel")
+                if bus then
+                    if not lastBusExisted then
+                        bus:Destroy()
+                        statusLabel.Text = "[DEBUG] BusModel eliminado (Anti Bus)"
+                        lastBusExisted = false
+                    end
+                else
+                    if lastBusExisted then
+                        statusLabel.Text = "[DEBUG] BusModel desapareció"
+                    end
+                    lastBusExisted = false
+                end
+            else
+                lastBusExisted = false
+            end
+            task.wait(0.1)
+        end
+    end)
+
+    -- Función draggable compatible con móvil y PC
     local function makeDraggable(frame)
-        local dragging
-        local dragInput
-        local dragStart
-        local startPos
+        local UserInputService = game:GetService("UserInputService")
+        local dragging = false
+        local dragInput, dragStart, startPos
+
+        local function update(input)
+            local delta = input.Position - dragStart
+            frame.Position = UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset + delta.Y
+            )
+        end
 
         frame.InputBegan:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
                 dragging = true
                 dragStart = input.Position
                 startPos = frame.Position
+                dragInput = input
 
                 input.Changed:Connect(function()
                     if input.UserInputState == Enum.UserInputState.End then
@@ -497,21 +597,9 @@ local function createExtraPackGUI()
             end
         end)
 
-        frame.InputChanged:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseMovement then
-                dragInput = input
-            end
-        end)
-
         game:GetService("UserInputService").InputChanged:Connect(function(input)
             if dragging and input == dragInput then
-                local delta = input.Position - dragStart
-                frame.Position = UDim2.new(
-                    startPos.X.Scale,
-                    startPos.X.Offset + delta.X,
-                    startPos.Y.Scale,
-                    startPos.Y.Offset + delta.Y
-                )
+                update(input)
             end
         end)
     end
@@ -520,9 +608,6 @@ local function createExtraPackGUI()
 
     return screenGui, mainFrame
 end
-
-local extraPackGUI, extraPackFrame = createExtraPackGUI()
-
 -- Botón para abrir/ocultar el Extra Pack en el GUI principal
 local openPackButton = Instance.new("TextButton", gui)
 openPackButton.Size = UDim2.new(0, 150, 0, 40)
@@ -922,42 +1007,3 @@ do
         end
     end)
 end
--- Extensión: función draggable compatible con tacto y ratón
-local function makeDraggable(frame)
-    local UserInputService = game:GetService("UserInputService")
-    local dragging = false
-    local dragInput, dragStart, startPos
-
-    local function onInputChanged(input)
-        if dragging and input == dragInput then
-            local delta = input.Position - dragStart
-            frame.Position = UDim2.new(
-                startPos.X.Scale,
-                startPos.X.Offset + delta.X,
-                startPos.Y.Scale,
-                startPos.Y.Offset + delta.Y
-            )
-        end
-    end
-
-    frame.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.Touch 
-           or input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            dragStart = input.Position
-            startPos = frame.Position
-            dragInput = input
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
-            end)
-        end
-    end)
-
-    game:GetService("UserInputService").InputChanged:Connect(onInputChanged)
-end
-
--- Uso: después de crear tu mainFrame:
-makeDraggable(mainFrame)
-
