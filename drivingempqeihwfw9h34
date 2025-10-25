@@ -1,0 +1,121 @@
+
+local success, Rayfield = pcall(function()
+    return loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+end)
+
+if not success then
+    warn("Error cargando Rayfield, intentando URL alternativa...")
+    Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Rayfield/main/source'))()
+end
+
+-- Crear ventana
+local Window = Rayfield:CreateWindow({
+    Name = "Auto Complete Zombie",
+    LoadingTitle = "Cargando Script",
+    LoadingSubtitle = "by yeahafk",
+    ConfigurationSaving = {
+        Enabled = false,
+    },
+    Discord = {
+        Enabled = false,
+    },
+    KeySystem = false,
+})
+
+-- Crear Tab principal
+local MainTab = Window:CreateTab("Main", 4483362458)
+
+-- Crear sección
+local Section = MainTab:CreateSection("Auto Completar Zombies")
+
+-- Variable de control
+local autoEnabled = false
+
+-- Toggle para activar/desactivar
+local Toggle = MainTab:CreateToggle({
+    Name = "Auto Kill Zombies (el unico requisito es acercarse a los zombies)",
+    CurrentValue = false,
+    Flag = "AutoZombieToggle",
+    Callback = function(Value)
+        autoEnabled = Value
+        if Value then
+            Rayfield:Notify({
+                Title = "Auto Zombie",
+                Content = "Activado",
+                Duration = 2,
+                Image = 4483362458,
+            })
+        else
+            Rayfield:Notify({
+                Title = "Auto Zombie",
+                Content = "Desactivado",
+                Duration = 2,
+                Image = 4483362458,
+            })
+        end
+    end,
+})
+
+-- Función para generar vector aleatorio realista
+local function generateRandomVector()
+    local function randomFloat(min, max)
+        return min + (math.random() * (max - min))
+    end
+    
+    return vector.create(
+        randomFloat(-100, 100),
+        randomFloat(-5, 5),
+        randomFloat(-100, 100)
+    )
+end
+
+-- Función para matar zombies 7 veces
+local function killAllZombies()
+    local gameFolder = workspace:FindFirstChild("Game")
+    if not gameFolder then return end
+    
+    local spookfest = gameFolder:FindFirstChild("Spookfest2025")
+    if not spookfest then return end
+    
+    local zombieSpawners = spookfest:FindFirstChild("ZombieSpawners")
+    if not zombieSpawners then return end
+    
+    -- Ejecutar 7 veces cada zombie
+    for _, spawner in pairs(zombieSpawners:GetChildren()) do
+        if spawner:IsA("BasePart") or spawner:IsA("Model") then
+            for i = 1, 10 do -- 7 veces por spawner
+                pcall(function()
+                    local args = {
+                        [1] = spawner,
+                        [2] = "Dead",
+                        [3] = {
+                            HitVelocity = generateRandomVector()
+                        }
+                    }
+                    
+                    local remote = game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("ZombieDeath")
+                    remote:FireServer(unpack(args))
+                end)
+            end
+        end
+    end
+end
+
+-- Loop principal con 0.0001 segundos de cooldown
+task.spawn(function()
+    while task.wait(0.00000001) do -- 0.0001 segundos entre ciclos
+        if autoEnabled then
+            killAllZombies()
+        end
+    end
+end)
+
+-- Botón de cerrar
+local DestroyButton = MainTab:CreateButton({
+    Name = "Cerrar GUI",
+    Callback = function()
+        Rayfield:Destroy()
+    end,
+})
+
+print("Script cargado")
