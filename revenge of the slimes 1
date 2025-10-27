@@ -1,0 +1,308 @@
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Ventana = Rayfield:CreateWindow({
+    Name = "¡REVENGE OF THE SLIMES!",
+    LoadingTitle = "Cargando Script",
+    LoadingSubtitle = "por YEAHAFK",
+    ConfigurationSaving = {
+        Enabled = false,
+        FolderName = nil,
+    },
+})
+
+-- TAB PRINCIPAL
+local TabPrincipal = Ventana:CreateTab("Principal", 4483362458)
+
+local monedas = -9e9
+
+TabPrincipal:CreateInput({
+    Name = "Monedas",
+    PlaceholderText = "Escribe la cantidad de monedas",
+    RemoveTextAfterFocusLost = false,
+    Callback = function(texto)
+        monedas = tonumber(texto) or -9e9
+    end,
+})
+
+TabPrincipal:CreateButton({
+    Name = "Obtener Monedas",
+    Callback = function()
+        game.Workspace.DoShopPurchase:InvokeServer(game.Players.LocalPlayer.leaderstats.Coins, -monedas, "skill0")
+    end,
+})
+
+TabPrincipal:CreateButton({
+    Name = "Resetear Monedas",
+    Callback = function()
+        local plr = game.Players.LocalPlayer
+        plr.leaderstats.Coins.Value = 0
+        Rayfield:Notify({
+            Title = "Monedas reseteadas",
+            Content = "Tus monedas ahora son 0. Si el dinero se pone en negativo por usar el botón muchas veces ¡dale aquí para arreglarlo!",
+            Duration = 5,
+        })
+    end,
+})
+
+TabPrincipal:CreateButton({
+    Name = "Desbloquear todo",
+    Callback = function()
+        local jugador = game.Players.LocalPlayer
+        for _, obj in ipairs(jugador:GetChildren()) do
+            if obj:IsA("BoolValue") and not obj.Value then
+                obj.Value = true
+            end
+        end
+    end,
+})
+
+TabPrincipal:CreateButton({
+    Name = "Obtener Engranajes de los Cofres",
+    Callback = function()
+        local player = game:GetService("Players").LocalPlayer
+        local lighting = game:GetService("Lighting")
+        local DoShopPurchase = workspace.DoShopPurchase
+        local cofres = {"Chest1Gear", "Chest2Gear", "Chest3Gear"}
+
+        local function comprar(gear, chest)
+            local args = {
+                [1] = player.leaderstats.Coins,
+                [2] = 0,
+                [3] = chest,
+                [4] = gear
+            }
+            DoShopPurchase:InvokeServer(unpack(args))
+        end
+
+        for _, chestFolder in ipairs(cofres) do
+            local gearFolder = lighting:FindFirstChild(chestFolder)
+            if gearFolder then
+                for _, tool in ipairs(gearFolder:GetChildren()) do
+                    if tool:IsA("Tool") then
+                        local nombreCofre = chestFolder:sub(1, -5) 
+                        comprar(tool.Name, nombreCofre)
+                        wait(0.0001)
+                    end
+                end
+            end
+        end
+    end,
+})
+
+TabPrincipal:CreateButton({
+    Name = "Sin cooldown al construir",
+    Callback = function()
+        local jugador = game.Players.LocalPlayer
+        local function setCooldown()
+            local valor = jugador.PlayerGui.ItemGui.SelectedFrame.Selected.CoolDown
+            valor.Value = -math.huge
+            valor.Changed:Connect(function()
+                if valor.Value ~= -math.huge then
+                    valor.Value = -math.huge
+                end
+            end)
+        end
+        local function onTool(toolName, callback)
+            local tool = jugador.Backpack:WaitForChild(toolName)
+            local isEquipped = false
+            tool.Equipped:Connect(function()
+                if not isEquipped then
+                    callback()
+                    isEquipped = true
+                end
+            end)
+            tool.Unequipped:Connect(function()
+                isEquipped = false
+            end)
+        end
+        local ok = pcall(setCooldown)
+        if not ok then
+            onTool("Build", function()
+                wait(0.7)
+                setCooldown()
+            end)
+        end
+    end,
+})
+
+TabPrincipal:CreateButton({
+    Name = "Clones infinitos",
+    Callback = function()
+        local jugador = game.Players.LocalPlayer
+        local function setMaxClones()
+            local valor = jugador.PlayerGui.ItemGui.SelectedFrame.Selected.MaxClones
+            valor.Value = math.huge
+            valor.Changed:Connect(function()
+                if valor.Value ~= math.huge then
+                    valor.Value = math.huge
+                end
+            end)
+        end
+        local function onTool(toolName, callback)
+            local tool = jugador.Backpack:WaitForChild(toolName)
+            local isEquipped = false
+            tool.Equipped:Connect(function()
+                if not isEquipped then
+                    callback()
+                    isEquipped = true
+                end
+            end)
+            tool.Unequipped:Connect(function()
+                isEquipped = false
+            end)
+        end
+        local ok = pcall(setMaxClones)
+        if not ok then
+            onTool("Build", function()
+                wait(0.7)
+                setMaxClones()
+            end)
+        end
+    end,
+})
+
+-- TAB HABILIDAD ARCO
+local TabArco = Ventana:CreateTab("Arco", 4483362458)
+
+local habilidades = {"skill1", "skill2", "skill3", "skill4", "skill5", "skill6", "skill7", "skill8"}
+local habSeleccionada = "skill1"
+local spam, kill, aura = false, false, false
+local delay = 0.001
+local jugador = game.Players.LocalPlayer
+local mouse = jugador:GetMouse()
+
+TabArco:CreateDropdown({
+    Name = "Habilidad del arco",
+    Options = habilidades,
+    CurrentOption = habSeleccionada,
+    Callback = function(op)
+        habSeleccionada = op
+    end,
+})
+
+TabArco:CreateInput({
+    Name = "Cooldown",
+    PlaceholderText = "Pon el cooldown",
+    RemoveTextAfterFocusLost = false,
+    Callback = function(txt)
+        delay = tonumber(txt) or 0.001
+    end,
+})
+
+TabArco:CreateButton({
+    Name = "Sin cooldown en habilidades del arco",
+    Callback = function()
+        local function setArrowCooldowns()
+            for i = 0, 8 do
+                local c = jugador.PlayerGui.BowSkills.Frame:FindFirstChild("skill"..i).cooldown
+                c.Value = -math.huge
+                c.Changed:Connect(function()
+                    if c.Value ~= -math.huge then c.Value = -math.huge end
+                end)
+            end
+        end
+        local function onTool(toolName, callback)
+            local tool = jugador.Backpack:WaitForChild(toolName)
+            local isEquipped = false
+            tool.Equipped:Connect(function()
+                if not isEquipped then
+                    callback()
+                    isEquipped = true
+                end
+            end)
+            tool.Unequipped:Connect(function()
+                isEquipped = false
+            end)
+        end
+        local ok = pcall(setArrowCooldowns)
+        if not ok then
+            onTool("Bow", function()
+                wait(0.7)
+                setArrowCooldowns()
+            end)
+        end
+    end,
+})
+
+TabArco:CreateButton({
+    Name = "Siempre puede disparar",
+    Callback = function()
+        local bow = jugador.Backpack:WaitForChild("Bow")
+        local canShoot = bow:WaitForChild("CanShoot")
+        canShoot.Changed:Connect(function()
+            if not canShoot.Value then canShoot.Value = true end
+        end)
+        if not canShoot.Value then canShoot.Value = true end
+    end,
+})
+
+TabArco:CreateToggle({
+    Name = "Spam habilidad del arco",
+    CurrentValue = false,
+    Callback = function(valor)
+        spam = valor
+        if spam then
+            spawn(function()
+                while spam do
+                    wait(delay)
+                    local pos = mouse.Hit.Position
+                    local args = {pos, habSeleccionada}
+                    jugador.Character.Bow.Shoot.RemoteEvent:FireServer(unpack(args))
+                end
+            end)
+        end
+    end,
+})
+
+TabArco:CreateToggle({
+    Name = "Auto-kill slimes",
+    CurrentValue = false,
+    Callback = function(valor)
+        kill = valor
+        if kill then
+            spawn(function()
+                while kill do
+                    wait(delay)
+                    local char = jugador.Character or jugador.CharacterAdded:Wait()
+                    local remote = char.Bow.Shoot.RemoteEvent
+                    for _, slime in pairs(workspace.Slimes:GetChildren()) do
+                        if slime:IsA("Model") and slime:FindFirstChild("Slime") then
+                            local pos = slime.Slime.Position
+                            local args = {pos, habSeleccionada}
+                            remote:FireServer(unpack(args))
+                        end
+                    end
+                end
+            end)
+        end
+    end,
+})
+
+TabArco:CreateToggle({
+    Name = "Aura de habilidad",
+    CurrentValue = false,
+    Callback = function(valor)
+        aura = valor
+        if aura then
+            spawn(function()
+                while aura do
+                    wait(delay)
+                    local char = jugador.Character or jugador.CharacterAdded:Wait()
+                    local torso = char:WaitForChild("HumanoidRootPart")
+                    local remote = char.Bow.Shoot.RemoteEvent
+                    local args = {torso.Position, habSeleccionada}
+                    remote:FireServer(unpack(args))
+                end
+            end)
+        end
+    end,
+})
+
+-- PESTAÑA TIENDA
+local TabTienda = Ventana:CreateTab("Tienda", 4483362458)
+TabTienda:CreateButton({
+    Name = "Comprar Skill3",
+    Callback = function()
+        game.Workspace.DoShopPurchase:InvokeServer(game.Players.LocalPlayer.leaderstats.Coins, -945986745698454679,"skill3")
+    end,
+})
