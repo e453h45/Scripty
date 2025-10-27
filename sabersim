@@ -1,0 +1,1333 @@
+-- Rayfield Loader
+local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
+
+local rs = game:GetService("ReplicatedStorage")
+local events = rs:WaitForChild("Events")
+local CollectionService = game:GetService("CollectionService")
+local run = game:GetService("RunService")
+local workspace = game:GetService("Workspace")
+local players = game:GetService("Players")
+local lplr = players.LocalPlayer
+
+local Window = Rayfield:CreateWindow({
+    Name = "autoswing",
+    Icon = 0,
+    LoadingTitle = "saber sim op yes uwu cp",
+    LoadingSubtitle = "by yeahafk nigger",
+    Theme = "Default",
+    ToggleUIKeybind = "K",
+    ConfigurationSaving = {
+        Enabled = true,
+        FolderName = nil, -- Custom folder, optional
+        FileName = "nigger"
+    },
+    KeySystem = false
+})
+
+local MainTab = Window:CreateTab("Main", 4483362458) -- Title, Icon
+
+-- [features toggles]
+getgenv().autoswing = false
+MainTab:CreateToggle({
+    Name = "Auto Swing",
+    CurrentValue = false,
+    Flag = "AutoSwingToggle",
+    Callback = function(state)
+        getgenv().autoswing = state
+        if state then
+            task.spawn(function()
+                while getgenv().autoswing do
+                    events:WaitForChild("SwingSaber"):FireServer()
+                    run.RenderStepped:Wait()
+                end
+            end)
+        end
+    end,
+})
+
+local events = game:GetService("ReplicatedStorage"):WaitForChild("Events")
+
+
+-- Guarda los toggles para manipulaciones visuales
+getgenv().autosell = false
+getgenv().halloweenAutoSell = false
+getgenv().autocandy = false
+getgenv().autoReward = false
+getgenv().autoEventQuest = false
+
+local events = game:GetService("ReplicatedStorage"):WaitForChild("Events")
+local Workspace = game:GetService("Workspace")
+local Players = game:GetService("Players")
+local lplr = Players.LocalPlayer
+
+-- Toggles UI (define MainTab, EventTab in tu Rayfield)
+local autoSellToggle, halloweenAutoSellToggle
+
+autoSellToggle = MainTab:CreateToggle({
+    Name = "Auto Sell",
+    CurrentValue = false,
+    Flag = "AutoSellToggle",
+    Callback = function(state)
+        if state then
+            if getgenv().halloweenAutoSell then
+                getgenv().halloweenAutoSell = false
+                if halloweenAutoSellToggle and typeof(halloweenAutoSellToggle.Set) == "function" then
+                    halloweenAutoSellToggle:Set(false)
+                end
+            end
+        end
+        getgenv().autosell = state
+        if state then
+            task.spawn(function()
+                while getgenv().autosell do
+                    events:WaitForChild("SellStrength"):FireServer()
+                    task.wait() -- 1 frame; máximo permitido
+                end
+            end)
+        end
+    end
+})
+
+halloweenAutoSellToggle = MainTab:CreateToggle({
+    Name = "Halloween Auto Sell (if you have boost on jit)",
+    CurrentValue = false,
+    Flag = "HalloweenAutoSellToggle",
+    Callback = function(state)
+        if state then
+            if getgenv().autosell then
+                getgenv().autosell = false
+                if autoSellToggle and typeof(autoSellToggle.Set) == "function" then
+                    autoSellToggle:Set(false)
+                end
+            end
+        end
+        getgenv().halloweenAutoSell = state
+        if state then
+            task.spawn(function()
+                while getgenv().halloweenAutoSell do
+                    events:WaitForChild("SellStrength"):FireServer()
+                    task.wait() -- 1 frame
+                end
+            end)
+        end
+    end
+})
+
+MainTab:CreateToggle({
+    Name = "Auto Collect Candy",
+    CurrentValue = false,
+    Flag = "AutoCandyToggle",
+    Callback = function(state)
+        getgenv().autocandy = state
+        if state then
+            task.spawn(function()
+                while getgenv().autocandy do
+                    for _, obj in ipairs(Workspace:GetDescendants()) do
+                        if obj:IsA("BasePart") and obj.Name == "Candy" then
+                            local char = lplr.Character
+                            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+                            if hrp then
+                                obj.CFrame = hrp.CFrame
+                            end
+                        end
+                    end
+                    task.wait(0.1) -- checks every 0.1s
+                end
+            end)
+        end
+    end,
+})
+
+MainTab:CreateToggle({
+    Name = "Auto Collect Rewards",
+    CurrentValue = false,
+    Callback = function(state)
+        getgenv().autoReward = state
+        if state then
+            task.spawn(function()
+                local remote = events:WaitForChild("UIAction")
+                while getgenv().autoReward do
+                    remote:FireServer("ClaimDailyTimedReward")
+                    remote:FireServer("ClaimDailyReward")
+                    task.wait() -- 1 frame
+                end
+            end)
+        end
+    end
+})
+
+local EventTab = Window:CreateTab("Event Pass", 4483362458)
+
+EventTab:CreateToggle({
+    Name = "Auto Claim Event Quests",
+    CurrentValue = false,
+    Callback = function(state)
+        getgenv().autoEventQuest = state
+        if state then
+            task.spawn(function()
+                local remote = events:WaitForChild("UIAction")
+                while getgenv().autoEventQuest do
+                    local questNum = math.random(1,4)
+                    remote:FireServer("ClaimEventQuest", questNum)
+                    task.wait() -- 1 frame
+                end
+            end)
+        end
+    end
+})
+
+local AutoBuyTab = Window:CreateTab("Auto Buy Things", 4483362458)
+
+getgenv().autoBuySwords = false
+getgenv().autoBuySkills = false
+getgenv().autoBuyAuras = false
+getgenv().autoBuyAllDNAs = false
+AutoBuyTab:CreateToggle({
+    Name = "Auto Buy All DNAs",
+    CurrentValue = false,
+    Callback = function(state)
+        getgenv().autoBuyAllDNAs = state
+        if state then
+            task.spawn(function()
+                while getgenv().autoBuyAllDNAs do
+                    local args = { "BuyAllDNAs" }
+                    local events = game:GetService("ReplicatedStorage"):WaitForChild("Events")
+                    local remote = events:FindFirstChild("UIAction")
+                    if remote then
+                        remote:FireServer(unpack(args))
+                    end
+                    task.wait(0.1)
+                end
+            end)
+        end
+    end
+})
+
+
+AutoBuyTab:CreateToggle({
+    Name = "Auto Buy Swords",
+    CurrentValue = false,
+    Callback = function(state)
+        getgenv().autoBuySwords = state
+        if state then
+            spawn(function()
+                local remote = game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("UIAction")
+                while getgenv().autoBuySwords do
+                    remote:FireServer("BuyAllWeapons")
+                    wait(0.5)
+                end
+            end)
+        end
+    end
+})
+
+
+AutoBuyTab:CreateToggle({
+    Name = "Auto Buy All Skills",
+    CurrentValue = false,
+    Callback = function(state)
+        getgenv().autoBuySkills = state
+        if state then
+            spawn(function()
+                local remote = game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("UIAction")
+                while getgenv().autoBuySkills do
+                    remote:FireServer("BuyAllSkills")
+                    wait(0.5)
+                end
+            end)
+        end
+    end
+})
+AutoBuyTab:CreateToggle({
+    Name = "Auto Buy All pet auras",
+    CurrentValue = false,
+    Callback = function(state)
+        getgenv().autoBuyAllDNAs = state
+        if state then
+            task.spawn(function()
+                while getgenv().autoBuyAllDNAs do
+                    local args = { "BuyAllPetAuras" }
+                    local events = game:GetService("ReplicatedStorage"):WaitForChild("Events")
+                    local remote = events:FindFirstChild("UIAction")
+                    if remote then
+                        remote:FireServer(unpack(args))
+                    end
+                    task.wait(0.1)
+                end
+            end)
+        end
+    end
+})
+
+
+getgenv().autoTPParts = false
+getgenv().partNameToTP = "Crown" -- Change this to whatever part name you want to auto-teleport
+
+MainTab:CreateToggle({
+    Name = "Teleport Crown to Player",
+    CurrentValue = false,
+    Callback = function(state)
+        getgenv().autoTPParts = state
+        if state then
+            spawn(function()
+                local player = game.Players.LocalPlayer
+                while getgenv().autoTPParts do
+                    local char = player.Character or player.CharacterAdded:Wait()
+                    local hrp = char:FindFirstChild("HumanoidRootPart")
+                    local CurrencyHolder = game:GetService("Workspace").Gameplay.CurrencyPickup.CurrencyHolder
+                    if hrp and CurrencyHolder then
+                        for _, obj in ipairs(CurrencyHolder:GetChildren()) do
+                            if obj:IsA("BasePart") and obj.Name == getgenv().partNameToTP then
+                                obj.CFrame = hrp.CFrame
+                            end
+                        end
+                    end
+                    task.wait() -- Runs every frame
+                end
+            end)
+        end
+    end
+})
+
+getgenv().autoEquipBestNonEventPets = false
+getgenv().autoEquipBestEventPets = false
+
+MainTab:CreateToggle({
+    Name = "Auto Equip Best Non-Event Pets",
+    CurrentValue = false,
+    Callback = function(state)
+        getgenv().autoEquipBestNonEventPets = state
+        if state then
+            spawn(function()
+                local remote = game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("UIAction")
+                while getgenv().autoEquipBestNonEventPets do
+                    remote:FireServer("EquipBestPets")
+                    wait(1)
+                end
+            end)
+        end
+    end
+})
+
+MainTab:CreateToggle({
+    Name = "Auto Equip Best Event Pets",
+    CurrentValue = false,
+    Callback = function(state)
+        getgenv().autoEquipBestEventPets = state
+        if state then
+            spawn(function()
+                local remote = game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("UIAction")
+                while getgenv().autoEquipBestEventPets do
+                    remote:FireServer("EquipBestPets", true)
+                    wait(1)
+                end
+            end)
+        end
+    end
+})
+local OptimizationTab = Window:CreateTab("Optimization", 4483362458)
+
+-- White screen overlay
+getgenv().whiteScreen = false
+local whiteFrame
+OptimizationTab:CreateToggle({
+    Name = "White Screen",
+    CurrentValue = false,
+    Callback = function(state)
+        getgenv().whiteScreen = state
+        if state then
+            whiteFrame = Instance.new("ScreenGui", game.Players.LocalPlayer.PlayerGui)
+            whiteFrame.Name = "WhiteScreenGui"
+            local frame = Instance.new("Frame", whiteFrame)
+            frame.Size = UDim2.new(1, 0, 1, 0)
+            frame.BackgroundColor3 = Color3.new(1,1,1)
+            frame.BorderSizePixel = 0
+        else
+            local g = game.Players.LocalPlayer.PlayerGui:FindFirstChild("WhiteScreenGui")
+            if g then g:Destroy() end
+        end
+    end
+})
+
+-- Black screen overlay
+getgenv().blackScreen = false
+local blackFrame
+OptimizationTab:CreateToggle({
+    Name = "Black Screen",
+    CurrentValue = false,
+    Callback = function(state)
+        getgenv().blackScreen = state
+        if state then
+            blackFrame = Instance.new("ScreenGui", game.Players.LocalPlayer.PlayerGui)
+            blackFrame.Name = "BlackScreenGui"
+            local frame = Instance.new("Frame", blackFrame)
+            frame.Size = UDim2.new(1, 0, 1, 0)
+            frame.BackgroundColor3 = Color3.new(0,0,0)
+            frame.BorderSizePixel = 0
+        else
+            local g = game.Players.LocalPlayer.PlayerGui:FindFirstChild("BlackScreenGui")
+            if g then g:Destroy() end
+        end
+    end
+})
+-- Destroy Graphics EXTREME (refreshes every 7 seconds, affects tons of stuff)
+getgenv().destroyGraphics = false
+local graphicsCache = {}
+OptimizationTab:CreateToggle({
+    Name = "Destroy Graphics",
+    CurrentValue = false,
+    Callback = function(state)
+        getgenv().destroyGraphics = state
+        if state then
+            task.spawn(function()
+                while getgenv().destroyGraphics do
+                    for _, obj in ipairs(workspace:GetDescendants()) do
+                        -- Hide mesh/texture/decal/particle/smoke/fire/trail/sparkles
+                        if obj:IsA("BasePart") or obj:IsA("MeshPart") or obj:IsA("Part") or obj:IsA("WedgePart") or obj:IsA("CornerWedgePart") or
+                           obj:IsA("Texture") or obj:IsA("Decal") or obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Smoke") or
+                           obj:IsA("Fire") or obj:IsA("Sparkles") or obj:IsA("Beam") or obj:IsA("ForceField") or obj:IsA("Shirt") or obj:IsA("Pants") then
+                            if obj.Transparency < 1 then
+                                graphicsCache[obj] = obj.Transparency
+                                obj.Transparency = 1
+                            end
+                        end
+                        -- Hide mesh
+                        if obj:IsA("SpecialMesh") or obj:IsA("Mesh") then
+                            if obj.Scale ~= Vector3.new(0,0,0) or obj.Offset ~= Vector3.new(9999,9999,9999) then
+                                graphicsCache[obj] = {obj.Scale, obj.Offset}
+                                obj.Scale = Vector3.new(0,0,0)
+                                obj.Offset = Vector3.new(9999,9999,9999)
+                            end
+                        end
+                        -- Disable lights, audio and other effects
+                        if obj:IsA("Light") or obj:IsA("PointLight") or obj:IsA("SurfaceLight") or obj:IsA("SpotLight") or obj:IsA("Highlight") then
+                            graphicsCache[obj] = obj.Enabled
+                            obj.Enabled = false
+                        end
+                        if obj:IsA("Sound") then
+                            graphicsCache[obj] = obj.Playing
+                            obj.Playing = false
+                        end
+                        -- GUI/visual objects
+                        if obj:IsA("BillboardGui") or obj:IsA("SurfaceGui") or obj:IsA("ScreenGui") or obj:IsA("GuiObject") then
+                            graphicsCache[obj] = {obj.Enabled, obj.Visible}
+                            obj.Enabled = false
+                            obj.Visible = false
+                        end
+                        if obj:IsA("Fog") or obj:IsA("Atmosphere") then
+                            graphicsCache[obj] = obj.Enabled
+                            obj.Enabled = false
+                        end
+                        if obj:IsA("ProximityPrompt") then
+                            graphicsCache[obj] = obj.Enabled
+                            obj.Enabled = false
+                        end
+                        if obj:IsA("Accessory") or obj:IsA("Hat") then
+                            if obj.Parent then
+                                graphicsCache[obj] = obj.Parent
+                                obj.Parent = nil
+                            end
+                        end
+                    end
+                    task.wait(7)
+                end
+            end)
+        else
+            for obj, val in pairs(graphicsCache) do
+                pcall(function()
+                    if not obj then return end
+                    if obj:IsA("BasePart") or obj:IsA("MeshPart") or obj:IsA("Part") or obj:IsA("WedgePart") or obj:IsA("CornerWedgePart") or
+                       obj:IsA("Texture") or obj:IsA("Decal") or obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Smoke") or
+                       obj:IsA("Fire") or obj:IsA("Sparkles") or obj:IsA("Beam") or obj:IsA("ForceField") or obj:IsA("Shirt") or obj:IsA("Pants") then
+                        obj.Transparency = val
+                    elseif obj:IsA("SpecialMesh") or obj:IsA("Mesh") then
+                        obj.Scale = val[1]
+                        obj.Offset = val[2]
+                    elseif obj:IsA("Light") or obj:IsA("PointLight") or obj:IsA("SurfaceLight") or obj:IsA("SpotLight") or obj:IsA("Highlight") then
+                        obj.Enabled = val
+                    elseif obj:IsA("Sound") then
+                        obj.Playing = val
+                    elseif obj:IsA("BillboardGui") or obj:IsA("SurfaceGui") or obj:IsA("ScreenGui") or obj:IsA("GuiObject") then
+                        obj.Enabled = val[1]
+                        obj.Visible = val[2]
+                    elseif obj:IsA("Fog") or obj:IsA("Atmosphere") or obj:IsA("ProximityPrompt") then
+                        obj.Enabled = val
+                    elseif obj:IsA("Accessory") or obj:IsA("Hat") then
+                        if val then obj.Parent = val end
+                    end
+                end)
+            end
+            graphicsCache = {}
+        end
+    end
+})
+
+-- VFX Destroyer (affects ALL possible VFX objects, disables enabled but also sets rate, lifetime, etc.)
+getgenv().disableVFX = false
+local vfxCache = {}
+OptimizationTab:CreateToggle({
+    Name = "Disable VFX",
+    CurrentValue = false,
+    Callback = function(state)
+        getgenv().disableVFX = state
+        if state then
+            task.spawn(function()
+                while getgenv().disableVFX do
+                    for _, obj in ipairs(workspace:GetDescendants()) do
+                        if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Explosion") or obj:IsA("Smoke") or obj:IsA("Fire") or
+                           obj:IsA("Sparkles") or obj:IsA("Beam") or obj:IsA("ProximityPrompt") or obj:IsA("ForceField") then
+                            if vfxCache[obj] == nil then
+                                vfxCache[obj] = {obj.Enabled, obj.Rate, obj.Lifetime}
+                            end
+                            obj.Enabled = false
+                            if obj.Rate then obj.Rate = 0 end
+                            if obj.Lifetime then obj.Lifetime = NumberRange.new(0) end
+                        end
+                    end
+                    task.wait(7)
+                end
+            end)
+        else
+            for obj, val in pairs(vfxCache) do
+                pcall(function()
+                    if obj and obj.Parent then 
+                        obj.Enabled = val[1]
+                        if obj.Rate and val[2] then obj.Rate = val[2] end
+                        if obj.Lifetime and val[3] then obj.Lifetime = val[3] end
+                    end
+                end)
+            end
+            vfxCache = {}
+        end
+    end
+})
+
+-- Simplification EXTREME (fully greyscale, disables reflectance, disables cast shadow, disables material effects, disables detail level/colorlevel)
+getgenv().simplifyEverything = false
+local simplifyCache = {}
+OptimizationTab:CreateToggle({
+    Name = "Simplify Everything",
+    CurrentValue = false,
+    Callback = function(state)
+        getgenv().simplifyEverything = state
+        if state then
+            task.spawn(function()
+                while getgenv().simplifyEverything do
+                    for _, obj in ipairs(workspace:GetDescendants()) do
+                        if obj:IsA("BasePart") or obj:IsA("Part") or obj:IsA("MeshPart") then
+                            if simplifyCache[obj] == nil then
+                                simplifyCache[obj] = {obj.Color, obj.Material, obj.Reflectance, obj.CastShadow, obj.Transparency}
+                            end
+                            obj.Color = Color3.new(0.5,0.5,0.5)
+                            obj.Reflectance = 0
+                            obj.CastShadow = false
+                            obj.Material = Enum.Material.Plastic
+                            obj.Transparency = math.min(1,obj.Transparency+0.5)
+                        end
+                        if obj:IsA("Texture") or obj:IsA("Decal") then
+                            if simplifyCache[obj] == nil then
+                                simplifyCache[obj] = obj.Transparency
+                            end
+                            obj.Transparency = 1
+                        end
+                        if obj:IsA("SpecialMesh") or obj:IsA("Mesh") then
+                            if simplifyCache[obj] == nil then
+                                simplifyCache[obj] = obj.Scale
+                            end
+                            obj.Scale = Vector3.new(0,0,0)
+                        end
+                    end
+                    task.wait(7)
+                end
+            end)
+        else
+            for obj, val in pairs(simplifyCache) do
+                pcall(function()
+                    if obj:IsA("BasePart") or obj:IsA("Part") or obj:IsA("MeshPart") then
+                        obj.Color = val[1]
+                        obj.Material = val[2]
+                        obj.Reflectance = val[3]
+                        obj.CastShadow = val[4]
+                        obj.Transparency = val[5]
+                    elseif obj:IsA("Texture") or obj:IsA("Decal") then
+                        obj.Transparency = val
+                    elseif obj:IsA("SpecialMesh") or obj:IsA("Mesh") then
+                        obj.Scale = val
+                    end
+                end)
+            end
+            simplifyCache = {}
+        end
+    end
+})
+
+-- No Effects (removes camera, blur, bloom, color correction, fog, sunrays, depth of field, etc.)
+getgenv().noEffects = false
+local effectsCache = {}
+OptimizationTab:CreateToggle({
+    Name = "No Effects",
+    CurrentValue = false,
+    Callback = function(state)
+        getgenv().noEffects = state
+        if state then
+            task.spawn(function()
+                while getgenv().noEffects do
+                    local cam = workspace.CurrentCamera
+                    for _, obj in ipairs(cam:GetChildren()) do
+                        if obj:IsA("PostEffect") or obj:IsA("DepthOfFieldEffect") or obj:IsA("BloomEffect") or obj:IsA("BlurEffect") or
+                           obj:IsA("SunRaysEffect") or obj:IsA("ColorCorrectionEffect") or obj:IsA("Atmosphere") or obj:IsA("Fog") then
+                            if effectsCache[obj] == nil then
+                                effectsCache[obj] = obj.Enabled
+                            end
+                            obj.Enabled = false
+                        end
+                    end
+                    task.wait(7)
+                end
+            end)
+        else
+            for obj, val in pairs(effectsCache) do
+                pcall(function()
+                    if obj and obj.Parent then obj.Enabled = val end
+                end)
+            end
+            effectsCache = {}
+        end
+    end
+})
+getgenv().disableAnimations = false
+local animCache = {}
+OptimizationTab:CreateToggle({
+    Name = "Disable Animations",
+    CurrentValue = false,
+    Callback = function(state)
+        getgenv().disableAnimations = state
+        local players = game:GetService("Players")
+        if state then
+            task.spawn(function()
+                while getgenv().disableAnimations do
+                    for _, player in ipairs(players:GetPlayers()) do
+                        local char = player.Character
+                        if char then
+                            for _, obj in ipairs(char:GetDescendants()) do
+                                if obj:IsA("Animator") or obj:IsA("AnimationController") then
+                                    if animCache[obj] == nil then
+                                        animCache[obj] = obj.Enabled
+                                    end
+                                    obj.Enabled = false
+                                end
+                            end
+                        end
+                    end
+                    task.wait(7)
+                end
+            end)
+        else
+            for obj, val in pairs(animCache) do
+                pcall(function()
+                    if obj and obj.Parent then obj.Enabled = val end
+                end)
+            end
+            animCache = {}
+        end
+    end
+})
+getgenv().hideHumanoids = false
+OptimizationTab:CreateToggle({
+    Name = "Hide Humanoids & Models",
+    CurrentValue = false,
+    Callback = function(state)
+        getgenv().hideHumanoids = state
+        if state then
+            task.spawn(function()
+                while getgenv().hideHumanoids do
+                    for _, obj in ipairs(workspace:GetDescendants()) do
+                        if obj:IsA("Model") or obj:IsA("Humanoid") then
+                            obj.Parent = nil
+                        end
+                    end
+                    task.wait(7)
+                end
+            end)
+        end
+    end
+})
+getgenv().lowFrameRate = false
+OptimizationTab:CreateToggle({
+    Name = "Low FrameRate & Render",
+    CurrentValue = false,
+    Callback = function(state)
+        getgenv().lowFrameRate = state
+        if state then
+            settings().RenderingQualityLevel = Enum.RenderingQualityLevel.Level01 -- El más bajo!
+            settings().FrameRateManager = Enum.FrameRateManagerMode.Disabled -- Intenta limitar FPS
+        else
+            settings().RenderingQualityLevel = Enum.RenderingQualityLevel.Automatic
+            settings().FrameRateManager = Enum.FrameRateManagerMode.Automatic
+        end
+    end
+})
+getgenv().noSound = false
+OptimizationTab:CreateToggle({
+    Name = "No Sound (Global)",
+    CurrentValue = false,
+    Callback = function(state)
+        getgenv().noSound = state
+        local soundService = game:GetService("SoundService")
+        soundService.Volume = state and 0 or 1
+    end
+})
+
+getgenv().autoBuyAuras = false
+
+AutoBuyTab:CreateToggle({
+    Name = "Auto Buy Crown/Aura Thing",
+    CurrentValue = false,
+    Callback = function(state)
+        getgenv().autoBuyAuras = state
+        if state then
+            spawn(function()
+                local remote = game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("UIAction")
+                while getgenv().autoBuyAuras do
+                    remote:FireServer("BuyAllAuras")
+                    wait(0.5)
+                end
+            end)
+        end
+    end
+})
+
+task.spawn(function()
+    if getgenv().afkFarm then
+        local vu = game:GetService("VirtualUser")
+        afkConnection = game:GetService("Players").LocalPlayer.Idled:Connect(function()
+            vu:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+            wait(1)
+            vu:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+        end)
+    end
+end)
+local KillMobsTab = Window:CreateTab("Kill Mobs", 4483362458)
+KillMobsTab:CreateButton({
+    Name = "Tp to Fire Arena (must be in water arena for the kill all to work)",
+    Callback = function()
+        local fireZone = game:GetService("Workspace").Gameplay.Map.ElementZones.Fire:FindFirstChild("Fire")
+        local char = game.Players.LocalPlayer.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        if fireZone and hrp then
+            local pp = fireZone:IsA("Model") and (fireZone.PrimaryPart or fireZone:FindFirstChildWhichIsA("BasePart")) or fireZone
+            if pp and pp.Position then
+                hrp.CFrame = CFrame.new(pp.Position) + Vector3.new(0, 5, 0) -- Un poco arriba
+            elseif fireZone.Position then
+                hrp.CFrame = CFrame.new(fireZone.Position) + Vector3.new(0, 5, 0)
+            end
+        else
+            print("No se encontró la zona Fire o tu personaje aún no está cargado.")
+        end
+    end
+})
+
+
+
+getgenv().autoKillAllFireGolems = false
+KillMobsTab:CreateToggle({
+    Name = "Auto Kill All Fire Golems",
+    CurrentValue = false,
+    Callback = function(state)
+        getgenv().autoKillAllFireGolems = state
+        if state then
+            spawn(function()
+                while getgenv().autoKillAllFireGolems do
+                    local fireFolder = workspace:FindFirstChild("Gameplay")
+                        and workspace.Gameplay:FindFirstChild("Map")
+                        and workspace.Gameplay.Map:FindFirstChild("ElementZones")
+                        and workspace.Gameplay.Map.ElementZones:FindFirstChild("Fire")
+                        and workspace.Gameplay.Map.ElementZones.Fire:FindFirstChild("Fire")
+                    local mobs = {}
+                    if fireFolder then
+                        for _, mob in ipairs(fireFolder:GetChildren()) do
+                            if mob.Name == "Fire Golem" then
+                                table.insert(mobs, mob)
+                            end
+                        end
+                    end
+                    if #mobs > 0 then
+                        local args = { mobs }
+                        local char = game.Players.LocalPlayer.Character
+                        for _, tool in ipairs(char:GetChildren()) do
+                            if tool:FindFirstChild("RemoteClick") then
+                                pcall(function()
+                                    tool.RemoteClick:FireServer(unpack(args))
+                                end)
+                            end
+                        end
+                    end
+                    wait(0.2)
+                end
+            end)
+        end
+    end
+})
+
+getgenv().autoKillFireBoss = false
+KillMobsTab:CreateToggle({
+    Name = "Auto Kill Fire Boss",
+    CurrentValue = false,
+    Callback = function(state)
+        getgenv().autoKillFireBoss = state
+        if state then
+            spawn(function()
+                while getgenv().autoKillFireBoss do
+                    local fireZone = workspace:FindFirstChild("Gameplay")
+                        and workspace.Gameplay:FindFirstChild("Map")
+                        and workspace.Gameplay.Map:FindFirstChild("ElementZones")
+                        and workspace.Gameplay.Map.ElementZones:FindFirstChild("Fire")
+                        and workspace.Gameplay.Map.ElementZones.Fire:FindFirstChild("Fire")
+                    local boss = fireZone and fireZone:FindFirstChild("Fire Boss")
+                    local char = game.Players.LocalPlayer.Character
+                    if boss and char then
+                        local args = { {boss} }
+                        for _, tool in ipairs(char:GetChildren()) do
+                            if tool:FindFirstChild("RemoteClick") then
+                                pcall(function()
+                                    tool.RemoteClick:FireServer(unpack(args))
+                                end)
+                            end
+                        end
+                    end
+                    wait(0.2)
+                end
+            end)
+        end
+    end
+})
+
+KillMobsTab:CreateButton({
+    Name = "Tp to Water Arena (must be in water arena for the kill all to work)",
+    Callback = function()
+        local waterZone = game:GetService("Workspace").Gameplay.Map.ElementZones.Water:FindFirstChild("Water")
+        local char = game.Players.LocalPlayer.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        if waterZone and hrp then
+            local pp = waterZone:IsA("Model") and (waterZone.PrimaryPart or waterZone:FindFirstChildWhichIsA("BasePart")) or waterZone
+            if pp and pp.Position then
+                hrp.CFrame = CFrame.new(pp.Position) + Vector3.new(0, 5, 0) -- Un poco arriba
+            elseif waterZone.Position then
+                hrp.CFrame = CFrame.new(waterZone.Position) + Vector3.new(0, 5, 0)
+            end
+        else
+            print("No se encontró la zona Water o tu personaje aún no está cargado.")
+        end
+    end
+})
+getgenv().autoKillAllWaterGolems = false
+KillMobsTab:CreateToggle({
+    Name = "Auto Kill All Water Golems",
+    CurrentValue = false,
+    Callback = function(state)
+        getgenv().autoKillAllWaterGolems = state
+        if state then
+            spawn(function()
+                while getgenv().autoKillAllWaterGolems do
+                    local waterFolder = workspace:FindFirstChild("Gameplay")
+                        and workspace.Gameplay:FindFirstChild("Map")
+                        and workspace.Gameplay.Map:FindFirstChild("ElementZones")
+                        and workspace.Gameplay.Map.ElementZones:FindFirstChild("Water")
+                        and workspace.Gameplay.Map.ElementZones.Water:FindFirstChild("Water")
+                    local mobs = {}
+                    if waterFolder then
+                        for _, mob in ipairs(waterFolder:GetChildren()) do
+                            if mob.Name == "Water Golem" then
+                                table.insert(mobs, mob)
+                            end
+                        end
+                    end
+                    if #mobs > 0 then
+                        local args = { mobs }
+                        local char = game.Players.LocalPlayer.Character
+                        for _, tool in ipairs(char:GetChildren()) do
+                            if tool:FindFirstChild("RemoteClick") then
+                                pcall(function()
+                                    tool.RemoteClick:FireServer(unpack(args))
+                                end)
+                            end
+                        end
+                    end
+                    wait(0.2)
+                end
+            end)
+        end
+    end
+})
+
+getgenv().autoKillWaterBoss = false
+KillMobsTab:CreateToggle({
+    Name = "Auto Kill Water Boss ",
+    CurrentValue = false,
+    Callback = function(state)
+        getgenv().autoKillWaterBoss = state
+        if state then
+            spawn(function()
+                while getgenv().autoKillWaterBoss do
+                    local waterZone = workspace:FindFirstChild("Gameplay")
+                        and workspace.Gameplay:FindFirstChild("Map")
+                        and workspace.Gameplay.Map:FindFirstChild("ElementZones")
+                        and workspace.Gameplay.Map.ElementZones:FindFirstChild("Water")
+                        and workspace.Gameplay.Map.ElementZones.Water:FindFirstChild("Water")
+                    local boss = waterZone and waterZone:FindFirstChild("Water Boss")
+                    local char = game.Players.LocalPlayer.Character
+                    if boss and char then
+                        local args = { {boss} }
+                        for _, tool in ipairs(char:GetChildren()) do
+                            if tool:FindFirstChild("RemoteClick") then
+                                pcall(function()
+                                    tool.RemoteClick:FireServer(unpack(args))
+                                end)
+                            end
+                        end
+                    end
+                    wait(0.2)
+                end
+            end)
+        end
+    end
+})
+
+KillMobsTab:CreateButton({
+    Name = "Tp to Earth Arena",
+    Callback = function()
+        local earthArena = workspace:FindFirstChild("Gameplay") and workspace.Gameplay:FindFirstChild("Map")
+            and workspace.Gameplay.Map:FindFirstChild("ElementZones")
+            and workspace.Gameplay.Map.ElementZones:FindFirstChild("Earth")
+            and workspace.Gameplay.Map.ElementZones.Earth:FindFirstChild("Model")
+            and workspace.Gameplay.Map.ElementZones.Earth.Model:FindFirstChild("Earth")
+        local char = game.Players.LocalPlayer.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        if earthArena and hrp then
+            local pp = earthArena:IsA("Model") and (earthArena.PrimaryPart or earthArena:FindFirstChildWhichIsA("BasePart")) or earthArena
+            if pp and pp.Position then
+                hrp.CFrame = CFrame.new(pp.Position) + Vector3.new(0, 5, 0)
+            elseif earthArena.Position then
+                hrp.CFrame = CFrame.new(earthArena.Position) + Vector3.new(0, 5, 0)
+            end
+        else
+            print("No se encontró la zona Earth o tu personaje aún no está cargado.")
+        end
+    end
+})
+getgenv().autoKillAllRockGolems = false
+KillMobsTab:CreateToggle({
+    Name = "Auto Kill All Rock Golems",
+    CurrentValue = false,
+    Callback = function(state)
+        getgenv().autoKillAllRockGolems = state
+        if state then
+            spawn(function()
+                while getgenv().autoKillAllRockGolems do
+                    local earthFolder = workspace:FindFirstChild("Gameplay")
+                        and workspace.Gameplay:FindFirstChild("Map")
+                        and workspace.Gameplay.Map:FindFirstChild("ElementZones")
+                        and workspace.Gameplay.Map.ElementZones:FindFirstChild("Earth")
+                        and workspace.Gameplay.Map.ElementZones.Earth:FindFirstChild("Model")
+                        and workspace.Gameplay.Map.ElementZones.Earth.Model:FindFirstChild("Earth")
+                    local mobs = {}
+                    if earthFolder then
+                        for _, mob in ipairs(earthFolder:GetChildren()) do
+                            if mob.Name == "Earth Golem" or mob.Name == "Rock Golem" then
+                                table.insert(mobs, mob)
+                            end
+                        end
+                    end
+                    if #mobs > 0 then
+                        local args = { mobs }
+                        local char = game.Players.LocalPlayer.Character
+                        for _, tool in ipairs(char:GetChildren()) do
+                            if tool:FindFirstChild("RemoteClick") then
+                                pcall(function()
+                                    tool.RemoteClick:FireServer(unpack(args))
+                                end)
+                            end
+                        end
+                    end
+                    wait(0.2)
+                end
+            end)
+        end
+    end
+})
+
+getgenv().autoKillRockBoss = false
+KillMobsTab:CreateToggle({
+    Name = "Auto Kill Rock Boss",
+    CurrentValue = false,
+    Callback = function(state)
+        getgenv().autoKillRockBoss = state
+        if state then
+            spawn(function()
+                while getgenv().autoKillRockBoss do
+                    local earthZone = workspace:FindFirstChild("Gameplay")
+                        and workspace.Gameplay:FindFirstChild("Map")
+                        and workspace.Gameplay.Map:FindFirstChild("ElementZones")
+                        and workspace.Gameplay.Map.ElementZones:FindFirstChild("Earth")
+                        and workspace.Gameplay.Map.ElementZones.Earth:FindFirstChild("Model")
+                        and workspace.Gameplay.Map.ElementZones.Earth.Model:FindFirstChild("Earth")
+                    local boss = earthZone and (earthZone:FindFirstChild("Earth Boss") or earthZone:FindFirstChild("Rock Boss"))
+                    local char = game.Players.LocalPlayer.Character
+                    if boss and char then
+                        local args = { {boss} }
+                        for _, tool in ipairs(char:GetChildren()) do
+                            if tool:FindFirstChild("RemoteClick") then
+                                pcall(function()
+                                    tool.RemoteClick:FireServer(unpack(args))
+                                end)
+                            end
+                        end
+                    end
+                    wait(0.2)
+                end
+            end)
+        end
+    end
+})
+KillMobsTab:CreateButton({
+    Name = "Tp to Main Boss Arena",
+    Callback = function()
+        local arena = workspace:FindFirstChild("Gameplay")
+            and workspace.Gameplay:FindFirstChild("Boss")
+            and workspace.Gameplay.Boss:FindFirstChild("ArenaBase")
+        local char = game.Players.LocalPlayer.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        if arena and hrp and arena.Position then
+            hrp.CFrame = CFrame.new(arena.Position) + Vector3.new(0, 5, 0)
+        else
+            print("No se encontró el ArenaBase de Boss o tu personaje aún no está cargado.")
+        end
+    end
+})
+
+getgenv().autoKillMainBoss = false
+KillMobsTab:CreateToggle({
+    Name = "Auto Kill Main Boss",
+    CurrentValue = false,
+    Callback = function(state)
+        getgenv().autoKillMainBoss = state
+        if state then
+            spawn(function()
+                while getgenv().autoKillMainBoss do
+                    local boss = workspace:FindFirstChild("Gameplay")
+                        and workspace.Gameplay:FindFirstChild("Boss")
+                        and workspace.Gameplay.Boss:FindFirstChild("BossHolder")
+                        and workspace.Gameplay.Boss.BossHolder:FindFirstChild("Boss")
+                    local char = game.Players.LocalPlayer.Character
+                    if boss and char then
+                        local args = { {boss} }
+                        for _, tool in ipairs(char:GetChildren()) do
+                            if tool:FindFirstChild("RemoteClick") then
+                                pcall(function()
+                                    tool.RemoteClick:FireServer(unpack(args))
+                                end)
+                            end
+                        end
+                    end
+                    wait(0.2)
+                end
+            end)
+        end
+    end
+})
+KillMobsTab:CreateButton({
+    Name = "Tp to Plasma Zone",
+    Callback = function()
+        local plasmaFloor = workspace:FindFirstChild("Gameplay")
+            and workspace.Gameplay:FindFirstChild("Map")
+            and workspace.Gameplay.Map:FindFirstChild("ElementZones")
+            and workspace.Gameplay.Map.ElementZones:FindFirstChild("Plasma")
+            and workspace.Gameplay.Map.ElementZones.Plasma:FindFirstChild("Meshes/DecagonFloor_Cylinder")
+        local char = game.Players.LocalPlayer.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+
+        if plasmaFloor and hrp and plasmaFloor.Position then
+            hrp.CFrame = CFrame.new(plasmaFloor.Position) + Vector3.new(0, 5, 0)
+            task.wait(0.5)
+        end
+
+        local plasmaZone = workspace:FindFirstChild("Gameplay")
+            and workspace.Gameplay:FindFirstChild("RegionsLoaded")
+            and workspace.Gameplay.RegionsLoaded:FindFirstChild("AdvancedPlasmaArea")
+            and workspace.Gameplay.RegionsLoaded.AdvancedPlasmaArea:FindFirstChild("Important")
+            and workspace.Gameplay.RegionsLoaded.AdvancedPlasmaArea.Important:FindFirstChild("Plasma")
+
+        if plasmaZone and hrp and plasmaZone.Position then
+            hrp.CFrame = CFrame.new(plasmaZone.Position) + Vector3.new(0, 5, 0)
+        else
+            print("No se encontró el centro de Plasma Zone después de esperar.")
+        end
+    end
+})
+getgenv().autoKillAllPlasmaGolems = false
+KillMobsTab:CreateToggle({
+    Name = "Auto Kill All Plasma Golems",
+    CurrentValue = false,
+    Callback = function(state)
+        getgenv().autoKillAllPlasmaGolems = state
+        if state then
+            task.spawn(function()
+                while getgenv().autoKillAllPlasmaGolems do
+                    local plasmaFolder = workspace:FindFirstChild("Gameplay")
+                        and workspace.Gameplay:FindFirstChild("RegionsLoaded")
+                        and workspace.Gameplay.RegionsLoaded:FindFirstChild("AdvancedPlasmaArea")
+                        and workspace.Gameplay.RegionsLoaded.AdvancedPlasmaArea:FindFirstChild("Important")
+                        and workspace.Gameplay.RegionsLoaded.AdvancedPlasmaArea.Important:FindFirstChild("Plasma")
+                    local mobs = {}
+                    if plasmaFolder then
+                        for _, mob in ipairs(plasmaFolder:GetChildren()) do
+                            if mob.Name == "Plasma Golem" then
+                                table.insert(mobs, mob)
+                            end
+                        end
+                    end
+                    if #mobs > 0 then
+                        local args = { mobs }
+                        local char = game.Players.LocalPlayer.Character
+                        for _, tool in ipairs(char:GetChildren()) do
+                            if tool:FindFirstChild("RemoteClick") then
+                                pcall(function()
+                                    tool.RemoteClick:FireServer(unpack(args))
+                                end)
+                            end
+                        end
+                    end
+                    task.wait(0.2)
+                end
+            end)
+        end
+    end
+}) -- <<<<< ESTA ES LA LLAVE DE CIERRE DEL TOGGLE
+getgenv().autoKillPlasmaBoss = false
+KillMobsTab:CreateToggle({
+    Name = "Auto Kill Plasma Boss",
+    CurrentValue = false,
+    Callback = function(state)
+        getgenv().autoKillPlasmaBoss = state
+        if state then
+            task.spawn(function()
+                while getgenv().autoKillPlasmaBoss do
+                    local boss = workspace:FindFirstChild("Gameplay")
+                        and workspace.Gameplay:FindFirstChild("RegionsLoaded")
+                        and workspace.Gameplay.RegionsLoaded:FindFirstChild("AdvancedPlasmaArea")
+                        and workspace.Gameplay.RegionsLoaded.AdvancedPlasmaArea:FindFirstChild("Important")
+                        and workspace.Gameplay.RegionsLoaded.AdvancedPlasmaArea.Important:FindFirstChild("Plasma")
+                        and workspace.Gameplay.RegionsLoaded.AdvancedPlasmaArea.Important.Plasma:FindFirstChild("Plasma Boss")
+                    local char = game.Players.LocalPlayer.Character
+                    if boss and char then
+                        local args = { {boss} }
+                        for _, tool in ipairs(char:GetChildren()) do
+                            if tool:FindFirstChild("RemoteClick") then
+                                pcall(function()
+                                    tool.RemoteClick:FireServer(unpack(args))
+                                end)
+                            end
+                        end
+                    end
+                    task.wait(0.2)
+                end
+            end)
+        end
+    end
+})
+getgenv().autoKillHalloweenBoss = false
+KillMobsTab:CreateToggle({
+    Name = "Auto Kill Halloween Boss",
+    CurrentValue = false,
+    Callback = function(state)
+        getgenv().autoKillHalloweenBoss = state
+        if state then
+            spawn(function()
+                while getgenv().autoKillHalloweenBoss do
+                    local boss =
+                        workspace:FindFirstChild("Gameplay")
+                        and workspace.Gameplay:FindFirstChild("RegionsLoaded")
+                        and workspace.Gameplay.RegionsLoaded:FindFirstChild("HalloweenEvent")
+                        and workspace.Gameplay.RegionsLoaded.HalloweenEvent:FindFirstChild("Boss")
+                        and workspace.Gameplay.RegionsLoaded.HalloweenEvent.Boss:FindFirstChild("BossHolder")
+                        and workspace.Gameplay.RegionsLoaded.HalloweenEvent.Boss.BossHolder:FindFirstChild("Boss")
+                    
+                    local char = game.Players.LocalPlayer.Character
+                    if boss and char then
+                        local args = { { boss } }
+                        for _, tool in ipairs(char:GetChildren()) do
+                            if tool:FindFirstChild("RemoteClick") then
+                                pcall(function()
+                                    tool.RemoteClick:FireServer(unpack(args))
+                                end)
+                            end
+                        end
+                    end
+                    wait(0.2)
+                end
+            end)
+        end
+    end
+})
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+local UIAction = ReplicatedStorage:WaitForChild("Events"):WaitForChild("UIAction")
+
+local EggsTab = Window:CreateTab("Eggs", 4483362458)
+
+-- Estados iniciales
+getgenv().autoEggSpam = false
+getgenv().removeEggCooldown = false
+local spamConnection = nil
+local animConnection = nil
+
+EggsTab:CreateButton({
+    Name = "Comprar Halloween Egg",
+    Callback = function()
+        local args = {"BuyEgg", "FC Egg"}
+        UIAction:FireServer(unpack(args))
+    end
+})
+
+EggsTab:CreateToggle({
+    Name = "Auto Buy (Cada Frame)",
+    CurrentValue = false,
+    Callback = function(state)
+        getgenv().autoEggSpam = state
+        if state then
+            if not spamConnection then
+                spamConnection = RunService.RenderStepped:Connect(function()
+                    local args = {"BuyEgg", "FC Egg"}
+                    UIAction:FireServer(unpack(args))
+                end)
+            end
+        else
+            if spamConnection then
+                spamConnection:Disconnect()
+                spamConnection = nil
+            end
+        end
+    end
+})
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local StatsCalculator = require(ReplicatedStorage.Modules.StatsCalculator)
+local PetsInfo = require(ReplicatedStorage.Modules.PetsInfo)
+
+local originalGetHatchCooldown = StatsCalculator.GetHatchCooldown
+local originalRarities = {}
+if PetsInfo.Rarities then
+    for name, rarity in pairs(PetsInfo.Rarities) do
+        originalRarities[name] = rarity.LengthMulti
+    end
+end
+
+EggsTab:CreateToggle({
+    Name = "Quitar Hatch Cooldown (ON/OFF)",
+    CurrentValue = false,
+    Callback = function(state)
+        if state then
+            -- Activar: quitar cooldown y acelerar animaciones
+            StatsCalculator.GetHatchCooldown = function(...) return 0.1 end
+            if PetsInfo.Rarities then
+                for _, rarity in pairs(PetsInfo.Rarities) do
+                    if rarity.LengthMulti then
+                        rarity.LengthMulti = 0.01
+                    end
+                end
+            end
+        else
+            -- Restaurar cooldown y animaciones originales
+            StatsCalculator.GetHatchCooldown = originalGetHatchCooldown
+            if PetsInfo.Rarities then
+                for name, rarity in pairs(PetsInfo.Rarities) do
+                    if rarity.LengthMulti and originalRarities[name] then
+                        rarity.LengthMulti = originalRarities[name]
+                    end
+                end
+            end
+        end
+    end
+})
+
+-- Para llamarlo, simplemente pon esto después de crear el window:
+-- AddEggsTab(window)
+local ExtraTab = Window:CreateTab("Extra", 4483362458)
+
+getgenv().afkFarm = true
+local afkConnection
+
+ExtraTab:CreateToggle({
+    Name = "anti AFK kick",
+    CurrentValue = true,
+    Callback = function(state)
+        getgenv().afkFarm = state
+        -- Disconnect any previous connection
+        if afkConnection then
+            afkConnection:Disconnect()
+            afkConnection = nil
+        end
+        if state then
+            local vu = game:GetService("VirtualUser")
+            afkConnection = game:GetService("Players").LocalPlayer.Idled:Connect(function()
+                vu:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+                wait(1)
+                vu:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+            end)
+        end
+    end
+})
+ExtraTab:CreateButton({
+    Name = "Auto Tp to Main Zone",
+    Callback = function()
+        -- Main zone part
+        local mainZone = workspace:FindFirstChild("Gameplay")
+            and workspace.Gameplay:FindFirstChild("Map")
+            and workspace.Gameplay.Map:FindFirstChild("Paths")
+            and workspace.Gameplay.Map.Paths:FindFirstChild("CenterCircleCenter")
+        -- Halloween portal (por RegionsLoaded)
+        local halloweenPortal = workspace:FindFirstChild("Gameplay")
+            and workspace.Gameplay:FindFirstChild("RegionsLoaded")
+            and workspace.Gameplay.RegionsLoaded:FindFirstChild("HalloweenEvent")
+            and workspace.Gameplay.RegionsLoaded.HalloweenEvent:FindFirstChild("HalloweenPortal")
+            and workspace.Gameplay.RegionsLoaded.HalloweenEvent.HalloweenPortal:FindFirstChild("Portal")
+            and workspace.Gameplay.RegionsLoaded.HalloweenEvent.HalloweenPortal.Portal:FindFirstChild("Meshes/portal2_Cube.003")
+        local char = game.Players.LocalPlayer.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        if hrp and mainZone and mainZone.Position then
+            if halloweenPortal and halloweenPortal.Position then
+                local distHalloween = (hrp.Position - halloweenPortal.Position).Magnitude
+                local distMain = (hrp.Position - mainZone.Position).Magnitude
+                if distHalloween < distMain then
+                    hrp.CFrame = CFrame.new(halloweenPortal.Position) + Vector3.new(0, 5, 0)
+                    task.wait(0.1)
+                end
+            end
+            hrp.CFrame = CFrame.new(mainZone.Position) + Vector3.new(0, 5, 0)
+        else
+            print("No se encontró alguno de los puntos o el personaje.")
+        end
+    end
+})
+
+ExtraTab:CreateButton({
+    Name = "Tp to Halloween Event",
+    Callback = function()
+        local portalPart = workspace:FindFirstChild("Gameplay")
+            and workspace.Gameplay:FindFirstChild("Map")
+            and workspace.Gameplay.Map:FindFirstChild("HalloweenPortal")
+            and workspace.Gameplay.Map.HalloweenPortal:FindFirstChild("Portal")
+            and workspace.Gameplay.Map.HalloweenPortal.Portal:FindFirstChild("Meshes/portal2_Cube.003")
+        local char = game.Players.LocalPlayer.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        if portalPart and hrp and portalPart.Position then
+            hrp.CFrame = CFrame.new(portalPart.Position) + Vector3.new(0, 5, 0)
+        else
+            print("No se encontró el portal de Halloween o tu personaje aún no está cargado.")
+        end
+    end
+})
