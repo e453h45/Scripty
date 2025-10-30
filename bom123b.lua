@@ -328,80 +328,6 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- SERVICES
-local WS = game:GetService("Workspace")
-
--- STATE
-local antiBombs = false
-local cleanupLoop = nil
-local bombsDescendantConn = nil
-
--- ANTI BOMBS AND EXPLOSIONS FULL BETA
-local antiBombsYTK = false
-local antiBombsYTKLoop = nil
-local bombsDescendantConn = nil
-local explosionsDescendantConn = nil
-
-local function clearFolder(folder)
-    for _, obj in ipairs(folder:GetChildren()) do
-        pcall(function() obj:Destroy() end)
-    end
-    folder.ChildAdded:Connect(function(obj)
-        pcall(function() obj:Destroy() end)
-    end)
-end
-
-local function SetAntiBombsYTK(enable)
-    antiBombsYTK = enable
-    if antiBombsYTK then
-        antiBombsYTKLoop = task.spawn(function()
-            while antiBombsYTK do
-                local bombsFolder = WS:FindFirstChild("Bombs")
-                if bombsFolder then clearFolder(bombsFolder) end
-                local explosionsFolder = WS:FindFirstChild("Explosions")
-                if explosionsFolder then clearFolder(explosionsFolder) end
-                task.wait(0.1)
-            end
-        end)
-        -- Instantly delete new additions
-        local bombsFolder = WS:FindFirstChild("Bombs")
-        if bombsFolder then
-            bombsDescendantConn = bombsFolder.DescendantAdded:Connect(function(obj)
-                pcall(function() obj:Destroy() end)
-            end)
-        end
-        local explosionsFolder = WS:FindFirstChild("Explosions")
-        if explosionsFolder then
-            explosionsDescendantConn = explosionsFolder.DescendantAdded:Connect(function(obj)
-                pcall(function() obj:Destroy() end)
-            end)
-        end
-        -- Delete raw Explosions added to workspace root
-        WS.ChildAdded:Connect(function(obj)
-            if obj:IsA("Explosion") then
-                pcall(function() obj:Destroy() end)
-            end
-        end)
-        print("[AntiBombs Beta ytk] Started: actively removing bombs and explosions from workspace.")
-    else
-        if antiBombsYTKLoop then antiBombsYTKLoop = nil end
-        if bombsDescendantConn and bombsDescendantConn.Connected then
-            bombsDescendantConn:Disconnect()
-        end
-        bombsDescendantConn = nil
-        if explosionsDescendantConn and explosionsDescendantConn.Connected then
-            explosionsDescendantConn:Disconnect()
-        end
-        explosionsDescendantConn = nil
-        print("[AntiBombs Beta ytk] Stopped.")
-    end
-end
-
-GeneralTab:CreateToggle({
-    Name = "Anti Bombs & Explosions (Beta ytk)",
-    CurrentValue = false,
-    Callback = SetAntiBombsYTK,
-})
 
 -- If needed, replace GeneralTab with your tab object from Rayfield
 -- If testing without Rayfield: call SetAntiBombs(true) or SetAntiBombs(false)
@@ -518,6 +444,104 @@ task.spawn(function()
         task.wait(0.1)
     end
 end)
+local VentajasTab = Window:CreateTab("Ventajas", 4483362458)
+
+-- ANTI BOMBS & EXPLOSIONS YTK
+local antiBombsYTK_v = false
+local antiBombsYTKLoop_v = nil
+local bombsDescendantConn_v = nil
+local explosionsDescendantConn_v = nil
+
+local function clearFolder_v(folder)
+    for _, obj in ipairs(folder:GetChildren()) do
+        pcall(function() obj:Destroy() end)
+    end
+    folder.ChildAdded:Connect(function(obj)
+        pcall(function() obj:Destroy() end)
+    end)
+end
+
+local function SetAntiBombsYTK_v(enable)
+    antiBombsYTK_v = enable
+    if antiBombsYTK_v then
+        antiBombsYTKLoop_v = task.spawn(function()
+            while antiBombsYTK_v do
+                local bombsFolder = WS:FindFirstChild("Bombs")
+                if bombsFolder then clearFolder_v(bombsFolder) end
+                local explosionsFolder = WS:FindFirstChild("Explosions")
+                if explosionsFolder then clearFolder_v(explosionsFolder) end
+                task.wait(0.1)
+            end
+        end)
+        local bombsFolder = WS:FindFirstChild("Bombs")
+        if bombsFolder then
+            bombsDescendantConn_v = bombsFolder.DescendantAdded:Connect(function(obj)
+                pcall(function() obj:Destroy() end)
+            end)
+        end
+        local explosionsFolder = WS:FindFirstChild("Explosions")
+        if explosionsFolder then
+            explosionsDescendantConn_v = explosionsFolder.DescendantAdded:Connect(function(obj)
+                pcall(function() obj:Destroy() end)
+            end)
+        end
+        WS.ChildAdded:Connect(function(obj)
+            if obj:IsA("Explosion") then
+                pcall(function() obj:Destroy() end)
+            end
+        end)
+        print("[Ventajas] Anti Bombs/Explosions ON")
+    else
+        if antiBombsYTKLoop_v then antiBombsYTKLoop_v = nil end
+        if bombsDescendantConn_v and bombsDescendantConn_v.Connected then
+            bombsDescendantConn_v:Disconnect()
+        end
+        bombsDescendantConn_v = nil
+        if explosionsDescendantConn_v and explosionsDescendantConn_v.Connected then
+            explosionsDescendantConn_v:Disconnect()
+        end
+        explosionsDescendantConn_v = nil
+        print("[Ventajas] Anti Bombs/Explosions OFF")
+    end
+end
+
+VentajasTab:CreateToggle({
+    Name = "Anti Bombs & Explosions",
+    CurrentValue = false,
+    Callback = SetAntiBombsYTK_v,
+})
+
+-- ANTI RAGDOLL (ejecuta remote cada frame)
+local antiRagdoll_v = false
+local ragdollLoop_v = nil
+
+local function SetAntiRagdoll_v(enable)
+    antiRagdoll_v = enable
+    if antiRagdoll_v then
+        ragdollLoop_v = RunService.Heartbeat:Connect(function()
+            local remotes = RS:FindFirstChild("Remotes")
+            local ragdollRemote = remotes and remotes:FindFirstChild("Ragdoll")
+            if ragdollRemote then
+                pcall(function()
+                    ragdollRemote:FireServer("off")
+                end)
+            end
+        end)
+        print("[Ventajas] Anti Ragdoll ON")
+    else
+        if ragdollLoop_v then
+            ragdollLoop_v:Disconnect()
+            ragdollLoop_v = nil
+        end
+        print("[Ventajas] Anti Ragdoll OFF")
+    end
+end
+
+VentajasTab:CreateToggle({
+    Name = "Anti Ragdoll (cada frame)",
+    CurrentValue = false,
+    Callback = SetAntiRagdoll_v,
+})
 
 --// END OF SCRIPT
 print("My Game Control Panel loaded.")
