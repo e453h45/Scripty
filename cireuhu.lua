@@ -48,6 +48,32 @@ MainTab:CreateToggle({
     end
 })
 
+-- Nuevo: Toggle para tocar todos los TouchInterest de ButtonsMoney
+local touchToggle = false
+local touchParts = {}
+
+local function getAllTouchParts()
+    local arr = {}
+    for _, obj in ipairs(workspace.ButtonsMoney:GetDescendants()) do
+        if obj:IsA("BasePart") and obj:FindFirstChildOfClass("TouchTransmitter") then
+            table.insert(arr, obj)
+        end
+    end
+    return arr
+end
+
+MainTab:CreateToggle({
+    Name = "Tocar todos los botones de dinero (TouchInterest)",
+    CurrentValue = false,
+    Flag = "MoneyTouch",
+    Callback = function(Value)
+        touchToggle = Value
+        if touchToggle then
+            touchParts = getAllTouchParts()
+        end
+    end
+})
+
 -- Gamepass block toggle
 local blockToggle = false
 local oldHooked = false
@@ -84,6 +110,17 @@ game:GetService("RunService").Heartbeat:Connect(function()
     if clickToggle then
         for _, cd in ipairs(clickDetectors) do
             fireclickdetector(cd)
+        end
+    end
+    if touchToggle then
+        local player = game:GetService("Players").LocalPlayer
+        local character = player.Character
+        if character and character:FindFirstChild("HumanoidRootPart") then
+            for _, part in ipairs(touchParts) do
+                -- Toca cada parte con el HumanoidRootPart
+                firetouchinterest(character.HumanoidRootPart, part, 0)
+                firetouchinterest(character.HumanoidRootPart, part, 1)
+            end
         end
     end
 end)
