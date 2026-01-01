@@ -1,0 +1,11 @@
+local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local args = {
+    "Flat Spin 360",
+    500
+}
+
+RunService.RenderStepped:Connect(function()
+    ReplicatedStorage:WaitForChild("TrickCompleted"):FireServer(unpack(args))
+end)
